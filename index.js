@@ -56,12 +56,15 @@ var enforceHTTPS = function(options) {
 			isHttps = true;
 		}
 
-		if(isHttps) {
+		var host = options.trustXForwardedHostHeader ? (req.headers['x-forwarded-host'] || req.headers.host) : req.headers.host;
+		var isWWW = host.indexOf('www.') === 0;
+		host = !isWWW ? `www.${host}` : host;
+
+		if(isHttps && isWWW) {
 			next();
 		} else {
 			// Only redirect GET methods
 			if(req.method === "GET" || req.method === 'HEAD') {
-				var host = options.trustXForwardedHostHeader ? (req.headers['x-forwarded-host'] || req.headers.host) : req.headers.host;
 				res.redirect(301, "https://" + host + req.originalUrl);
 			} else {
 				res.status(403).send("Please use HTTPS when submitting data to this server.");
